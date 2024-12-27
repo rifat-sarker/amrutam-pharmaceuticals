@@ -1,13 +1,27 @@
-import { Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 import { TAppointment } from "./appoinment.interface";
 
-export const appointmentSchema = new Schema<TAppointment>({
-  doctorId: String,
-  patientId: String,
-  timeSlot: Date,
+const appointmentSchema = new Schema<TAppointment>({
+  doctorId: {
+    type: String,
+    required: true
+  },
+  patientId: {
+    type: String,
+    required: true
+  },
+  timeSlot: {
+    type: Date,
+    required: true
+  },
   status: {
     type: String,
+    required: true,
     default: "Scheduled",
   },
 });
 
+export const Appointment = model<TAppointment>(
+  "Appointment",
+  appointmentSchema
+);
