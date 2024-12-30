@@ -1,14 +1,21 @@
 import { Request, Response } from "express";
-import { AppoinmentServices } from "./appoinment.service";
+import { AppointmentServices } from "./appoinment.service";
 
 // create appointments
 const createAppointment = async (req: Request, res: Response) => {
   try {
-    // console.log(req.body);
-    const result = await AppoinmentServices.createAppointmentIntoDB(req.body);
+    const { doctorId, patientId, patientName, requestedSlot } = req.body;
+
+    const result = await AppointmentServices.createAppointmentIntoDB(
+      doctorId,
+      patientId,
+      patientName,
+      new Date(requestedSlot) // Convert to Date object if string is provided
+    );
+
     res.status(201).json({
       success: true,
-      message: " Appoinment created",
+      message: "Appointment created successfully",
       result,
     });
   } catch (error: any) {
@@ -19,7 +26,7 @@ const createAppointment = async (req: Request, res: Response) => {
 // get all appointments
 const getAllAppointment = async (req: Request, res: Response) => {
   try {
-    const result = await AppoinmentServices.getAllAppointmentFromDB();
+    const result = await AppointmentServices.getAllAppointmentFromDB();
     // console.log(result);
     res.status(201).json({
       success: true,
@@ -37,7 +44,7 @@ const rescheduleAppointment = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { newSlot } = req.body;
 
-    const result = await AppoinmentServices.rescheduleAppointment(id, newSlot);
+    const result = await AppointmentServices.rescheduleAppointment(id, newSlot);
     res.status(201).json({
       success: true,
       message: "Appointment rescheduled successfully",

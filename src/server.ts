@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import app from "./app";
 import config from "./app/config";
-import { SchedulerJob } from "./app/modules/Scheduler/scheduler.job";
+
 
 async function main() {
   try {
@@ -14,7 +14,7 @@ async function main() {
     });
 
     // Initialize the scheduler after database connection
-    SchedulerJob.start();
+    // SchedulerJob.start();
   } catch (error) {
     console.log("Error starting the application:", error);
   }

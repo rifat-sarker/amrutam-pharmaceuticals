@@ -4,7 +4,6 @@ import { SlotServices } from "./slot.service";
 const getAvailableSlots = async (req: Request, res: Response) => {
   try {
     const {doctorId}  = req.params;
-    console.log(doctorId);
     const result = await SlotServices.getAvailableSlots(doctorId);
     res.status(201).json({
       success: true,

@@ -9,7 +9,6 @@ const appointmentSchema = new Schema<TAppointment>(
     },
     patientId: {
       type: String,
-      required: true,
     },
     timeSlot: {
       type: Date,
@@ -17,8 +16,7 @@ const appointmentSchema = new Schema<TAppointment>(
     },
     status: {
       type: String,
-      required: true,
-      default: "Scheduled",
+      enum: ["Scheduled", "Completed", "No-show"],
     },
   },
   { timestamps: true }

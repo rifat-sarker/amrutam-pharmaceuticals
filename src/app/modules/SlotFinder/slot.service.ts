@@ -3,7 +3,6 @@ import { Doctor } from "../Doctors/doctor.model";
 
 const getAvailableSlots = async (doctorId: string) => {
   const doctor = await Doctor.findOne({ doctorId });
-  console.log(doctor);
   if (!doctor) {
     throw new Error("Doctor not found");
   }

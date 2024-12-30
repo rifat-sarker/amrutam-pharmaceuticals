@@ -12,6 +12,10 @@ export const doctorSchema = new Schema<TDoctor>({
   },
   schedule: {
     type: [Date],
+    required: [true, "Schedule is required"],
+  },
+  availableSlots: {
+    type: [Date],
     required: [true, "Available slots are required"],
   },
 });

@@ -3,6 +3,10 @@ import { TPatient } from "./patient.interface";
 
 const patientSchema = new Schema<TPatient>(
   {
+    patientId: {
+      type: String,
+      required: [true, "Patient id is required"],
+    },
     name: {
       type: String,
       required: [true, "Patient name is required"],
@@ -27,7 +31,6 @@ const patientSchema = new Schema<TPatient>(
   },
   { timestamps: true }
 );
-
 
 // Creating the Patient model
 export const Patient = model<TPatient>("Patient", patientSchema);
