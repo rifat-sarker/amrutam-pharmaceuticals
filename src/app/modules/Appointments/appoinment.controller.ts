@@ -20,7 +20,7 @@ const createAppointment = async (req: Request, res: Response) => {
 const getAllAppointment = async (req: Request, res: Response) => {
   try {
     const result = await AppoinmentServices.getAllAppointmentFromDB();
-    console.log(result);
+    // console.log(result);
     res.status(201).json({
       success: true,
       message: "Appointments retrieved successfully",
