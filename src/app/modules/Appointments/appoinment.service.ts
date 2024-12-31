@@ -1,4 +1,6 @@
 import { DoctorServices } from "../Doctors/doctor.service";
+import { PatientServices } from "../Patient/patient.service";
+import { sendNotification } from "../Utils/notificationService";
 import { TAppointment } from "./appoinment.interface";
 import { Appointment } from "./appointment.model";
 
@@ -30,33 +32,49 @@ const getAllAppointmentFromDB = async () => {
   return result;
 };
 
-// Reschedule appointment logic
-const rescheduleAppointment = async (id: string, newSlot: any) => {
-  // Validate the newSlot
+const rescheduleAppointment = async (id: string, patientId: string, newSlot: string) => {
+  // Validate the new time slot
   const parsedSlot = new Date(newSlot);
   if (isNaN(parsedSlot.getTime())) {
     throw new Error("Invalid date format for newSlot");
   }
 
-  // Find the appointment by ID and get the patientId
+  // Find the appointment by ID
   const appointment = await Appointment.findById(id);
   if (!appointment) {
     throw new Error("Appointment not found");
   }
 
-  // Ensure that the patientId matches (i.e., patient is the same)
-  const patientId = appointment.patientId; // Assuming patientId is stored in appointment
-  if (!patientId) {
-    throw new Error("No patient found for this appointment");
+  // Ensure the appointment belongs to the provided patient ID
+  if (appointment.patientId !== patientId) {
+    throw new Error("Patient ID does not match the appointment");
   }
 
-  const result = await Appointment.findByIdAndUpdate(
+  // Fetch patient details from the patients database
+  const patient = await PatientServices.findPatientById(patientId);
+  if (!patient) {
+    throw new Error("Patient not found");
+  }
+
+  // Update the appointment with the new time slot and status
+  const updatedAppointment = await Appointment.findByIdAndUpdate(
     id,
     { timeSlot: parsedSlot, status: "Rescheduled" },
     { new: true }
   );
 
-  return result;
+  if (!updatedAppointment) {
+    throw new Error("Error updating the appointment");
+  }
+
+  // Send reschedule notification to the patient
+  await sendNotification(
+    patient.email,
+    "Rescheduled Appointment Notification",
+    `Dear ${patient.name}, your appointment has been rescheduled to ${parsedSlot.toLocaleString()}.`
+  );
+
+  return updatedAppointment;
 };
 export const AppointmentServices = {
   createAppointmentIntoDB,

@@ -1,49 +1,66 @@
 import nodeSchedule from "node-schedule";
 import { Appointment } from "../Appointments/appointment.model";
-import { sendNotification } from "../Utils/notificationService";
 import { PatientServices } from "../Patient/patient.service";
+import { sendNotification } from "../Utils/notificationService";
 
-// Scheduler job to detect No-Shows and send notifications
-nodeSchedule.scheduleJob("*/15 * * * *", async () => {
-  const now = new Date(); // Get the current date and time
+export const startScheduler = () => {
+  nodeSchedule.scheduleJob("*/15 * * * *", async () => {
+    const now = new Date();
+    console.log(`[Scheduler] Running job at: ${now.toISOString()}`);
 
-  try {
-    // Find appointments that are scheduled and their timeSlot is older than 15 minutes
-    const missedAppointments = await Appointment.find({
-      status: "Scheduled",
-      timeSlot: { $lt: new Date(now.getTime() - 15 * 60 * 1000) }, // Missed appointments
-    });
+    try {
+      const missedAppointments = await Appointment.find({
+        status: "Scheduled",
+        timeSlot: { $lt: new Date(now.getTime() - 15 * 60 * 1000) },
+      });
 
-    if (missedAppointments.length > 0) {
-      console.log(`${missedAppointments.length} missed appointment(s) found.`);
+      if (missedAppointments.length) {
+        console.log(`[Scheduler] Found ${missedAppointments.length} missed appointment(s).`);
 
-      // Loop through each missed appointment and update its status
-      for (const appointment of missedAppointments) {
-        // Update the appointment status to "No-show"
-        appointment.status = "No-show";
-        await appointment.save();
+        for (const appointment of missedAppointments) {
+          appointment.status = "No-show";
+          await appointment.save();
+          const patient = await PatientServices.findPatientById(appointment.patientId);
 
-        // Find the patient by their ID (assuming the patientId field exists in Appointment)
-        const patient = await PatientServices.findPatientById(
-          appointment.patientId
-        );
-
-        if (patient) {
-          // Send a notification to the patient about the missed appointment
-          await sendNotification(
-            patient.email,
-            "Missed Appointment Notification",
-            `Dear ${patient.name}, you missed your scheduled appointment. Please reschedule at your earliest convenience.`
-          );
-          console.log(`Notification sent to: ${patient.email}`);
-        } else {
-          console.log("Patient not found for appointment:", appointment._id);
+          if (patient) {
+            await sendNotification(
+              patient.email,
+              "Missed Appointment Notification",
+              `Dear ${patient.name}, you missed your appointment. Please reschedule.`
+            );
+            await rescheduleNotification(appointment, patient);
+          }
         }
+      } else {
+        console.log("[Scheduler] No missed appointments found.");
       }
-    } else {
-      console.log("No missed appointments at this time.");
+    } catch (error) {
+      console.error("[Scheduler] Error:", error);
     }
+  });
+
+  console.log("[Scheduler] Scheduler started.");
+};
+
+const rescheduleNotification = async (appointment: any, patient: any) => {
+  try {
+    const newTimeSlot = new Date(appointment.timeSlot.getTime() + 60 * 60 * 1000); // 1 hour later
+    const updatedAppointment = await Appointment.findByIdAndUpdate(appointment._id, {
+      timeSlot: newTimeSlot,
+      status: "Rescheduled",
+    }, { new: true });
+
+    if (updatedAppointment) {
+      await sendNotification(
+        patient.email,
+        "Rescheduled Appointment Notification",
+        `Your appointment has been rescheduled to ${newTimeSlot.toLocaleString()}.`
+      );
+      return updatedAppointment;
+    }
+    return null;
   } catch (error) {
-    console.error("Error in scheduler job:", error);
+    console.error("[Scheduler] Error rescheduling appointment:", error);
+    return null;
   }
-});
+};

@@ -42,9 +42,14 @@ const getAllAppointment = async (req: Request, res: Response) => {
 const rescheduleAppointment = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newSlot } = req.body;
-
-    const result = await AppointmentServices.rescheduleAppointment(id, newSlot);
+    const { newSlot, patientId } = req.body;
+    console.log("Received request body:", req.body);
+    
+    const result = await AppointmentServices.rescheduleAppointment(
+      id,
+      patientId,
+      newSlot
+    );
     res.status(201).json({
       success: true,
       message: "Appointment rescheduled successfully",
