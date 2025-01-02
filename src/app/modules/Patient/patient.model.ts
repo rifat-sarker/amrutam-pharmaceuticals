@@ -6,6 +6,7 @@ const patientSchema = new Schema<TPatient>(
     patientId: {
       type: String,
       required: [true, "Patient id is required"],
+      unique: true,
     },
     name: {
       type: String,

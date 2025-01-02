@@ -14,8 +14,9 @@ const findPatientByEmail = async (email: string) => {
 };
 
 // Function to find a patient by ID
-const findPatientById = async (id: string) => {
-  const patient = await Patient.findById(id);  // Use the MongoDB findById method
+const findPatientById = async (patientId: string) => {
+  // console.log({patientId});
+  const patient = await Patient.findOne({patientId}); 
   return patient;
 };
   

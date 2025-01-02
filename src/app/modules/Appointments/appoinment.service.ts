@@ -32,7 +32,11 @@ const getAllAppointmentFromDB = async () => {
   return result;
 };
 
-const rescheduleAppointment = async (id: string, patientId: string, newSlot: string) => {
+const rescheduleAppointment = async (
+  id: string,
+  patientId: string,
+  newSlot: string
+) => {
   // Validate the new time slot
   const parsedSlot = new Date(newSlot);
   if (isNaN(parsedSlot.getTime())) {
@@ -48,6 +52,32 @@ const rescheduleAppointment = async (id: string, patientId: string, newSlot: str
   // Ensure the appointment belongs to the provided patient ID
   if (appointment.patientId !== patientId) {
     throw new Error("Patient ID does not match the appointment");
+  }
+
+  // Check if the new slot is the same as the existing slot
+  if (appointment.timeSlot.toISOString() === parsedSlot.toISOString()) {
+    throw new Error(
+      "The new slot is the same as the current slot. No need to reschedule."
+    );
+  }
+
+  // Check if the appointment is still scheduled and hasn't been completed or no-show
+  if (appointment.status !== "Scheduled") {
+    throw new Error(
+      "This appointment cannot be rescheduled because it has already been completed or marked as no-show."
+    );
+  }
+
+  // Check if the new slot is already booked for the same doctor
+  const conflictingAppointment = await Appointment.findOne({
+    doctorId: appointment.doctorId,
+    timeSlot: parsedSlot,
+    status: "Scheduled",
+    _id: { $ne: id },
+  });
+
+  if (conflictingAppointment) {
+    throw new Error("The selected time slot is already booked for this doctor");
   }
 
   // Fetch patient details from the patients database
@@ -71,7 +101,9 @@ const rescheduleAppointment = async (id: string, patientId: string, newSlot: str
   await sendNotification(
     patient.email,
     "Rescheduled Appointment Notification",
-    `Dear ${patient.name}, your appointment has been rescheduled to ${parsedSlot.toLocaleString()}.`
+    `Dear ${
+      patient.name
+    }, your appointment has been rescheduled to ${parsedSlot.toLocaleString()}.`
   );
 
   return updatedAppointment;
