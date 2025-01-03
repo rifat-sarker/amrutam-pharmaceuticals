@@ -1,12 +1,13 @@
 import nodemailer from "nodemailer";
+import config from "../../config";
 
 // Create a transporter
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   auth: {
-    user: "rifatswd@gmail.com",
-    pass: "jglr lxlo dbya ezcj",
+    user: config.nodemailer_auth_user,
+    pass: config.nodemailer_auth_pass,
   },
 });
 
@@ -18,7 +19,7 @@ export const sendNotification = async (
 ) => {
   try {
     await transporter.sendMail({
-      from: "rifatswd@gmail.com", // Sender address
+      from: config.nodemailer_auth_user, // Sender address
       to, // Receiver email
       subject, // Subject line
       text, // Email body
