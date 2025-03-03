@@ -5,12 +5,11 @@ import { startScheduler } from "./app/modules/Scheduler/scheduler.job";
 
 async function main() {
   try {
-    // Connect to the database
     await mongoose.connect(config.database_url as string);
 
     // Start the scheduler
     startScheduler();
-    // Start the Express server
+
     app.listen(config.port, () => {
       console.log(`Example app listening on port ${config.port}`);
     });

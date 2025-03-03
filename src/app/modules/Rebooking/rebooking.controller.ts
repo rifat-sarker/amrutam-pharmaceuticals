@@ -1,10 +1,19 @@
 import { Request, Response } from "express";
 import { RebookingServices } from "./rebooking.service";
+import moment from "moment";
 
 
 const rebookAppointment = async (req: Request, res: Response) => {
   try {
-    const { appointmentId, newSlot } = req.body; // newSlot should be in ISO format
+    const { appointmentId, newSlot } = req.body;
+
+    // Validate newSlot format (ISO)
+    if (!moment(newSlot, moment.ISO_8601, true).isValid()) {
+      throw new Error(
+        "Invalid date format for newSlot. Please provide a valid ISO date."
+      );
+    }
+
     const updatedAppointment = await RebookingServices.rebookAppointment(
       appointmentId,
       newSlot

@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Send email function
+// Send email 
 export const sendNotification = async (
   to: string,
   subject: string,
@@ -19,10 +19,10 @@ export const sendNotification = async (
 ) => {
   try {
     await transporter.sendMail({
-      from: config.nodemailer_auth_user, // Sender address
-      to, // Receiver email
-      subject, // Subject line
-      text, // Email body
+      from: config.nodemailer_auth_user, 
+      to, 
+      subject, 
+      text, 
     });
     console.log(`Email sent to ${to}`);
   } catch (error) {

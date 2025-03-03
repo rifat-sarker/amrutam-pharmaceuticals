@@ -7,6 +7,8 @@ import { RebookingRoutes } from "./app/modules/Rebooking/rebooking.route";
 
 const app: Application = express();
 
+// https://amrutam-pharmaceuticals-omega.vercel.app
+
 //parser
 app.use(express.json());
 

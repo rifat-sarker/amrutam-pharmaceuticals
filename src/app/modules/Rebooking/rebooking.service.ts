@@ -4,7 +4,7 @@ import { Doctor } from "../Doctors/doctor.model";
 const rebookAppointment = async (appointmentId: string, newSlot: Date) => {
   // Check if the slot is available
   const appointment = await Appointment.findOne({ _id: appointmentId });
- 
+
   if (!appointment) {
     throw new Error("Appointment not found");
   }

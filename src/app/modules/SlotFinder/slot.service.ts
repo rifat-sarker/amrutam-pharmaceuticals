@@ -7,17 +7,18 @@ const getAvailableSlots = async (doctorId: string) => {
     throw new Error("Doctor not found");
   }
 
-  // Fetch booked slots for the doctor
   const bookedSlots = await Appointment.find({
     doctorId,
     status: "Scheduled",
   }).select("timeSlot");
 
-  // Filter available slots by excluding booked slots
-  const availableSlots = doctor.schedule.filter(
-    (slot) =>
-      !bookedSlots.some((appt) => appt.timeSlot.getTime() === slot.getTime())
-  );
+const availableSlots = doctor.schedule.filter(
+  (slot) =>
+    !bookedSlots.some(
+      (appt) => new Date(appt.timeSlot).getTime() === new Date(slot).getTime()
+    )
+);
+
   return availableSlots;
 };
 
