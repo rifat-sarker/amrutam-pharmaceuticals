@@ -33,46 +33,44 @@ const getAllAppointmentFromDB = async () => {
 const rescheduleAppointment = async (
   id: string,
   patientId: string,
-  doctorId: string, // Add doctorId
+  doctorId: string,
   newSlot: string
 ) => {
-  // Validate the new time slot
   const parsedSlot = new Date(newSlot);
+
   if (!newSlot || isNaN(parsedSlot.getTime())) {
     throw new Error("Invalid or missing date format for newSlot");
   }
 
-  // Find the appointment by ID
-  const appointment = await Appointment.findById(id);
-  if (!appointment) {
-    throw new Error("Appointment not found");
+  if (parsedSlot < new Date()) {
+    throw new Error("Cannot reschedule to a past time slot");
   }
 
-  // Ensure the appointment belongs to the provided patient ID and doctor ID
+  const appointment = await Appointment.findById(id);
+  if (!appointment) throw new Error("Appointment not found");
+
   if (appointment.patientId.toString() !== patientId) {
     throw new Error("Patient ID does not match the appointment");
   }
+
   if (appointment.doctorId.toString() !== doctorId) {
     throw new Error("Doctor ID does not match the appointment");
   }
 
-  // Check if the new slot is the same as the existing slot
   if (appointment.timeSlot.toISOString() === parsedSlot.toISOString()) {
     throw new Error(
       "The new slot is the same as the current slot. No need to reschedule."
     );
   }
 
-  // Check if the appointment is still scheduled and hasn't been completed or no-show
-  if (appointment.status !== "Scheduled") {
+  if (!["Scheduled", "Rescheduled"].includes(appointment.status)) {
     throw new Error(
-      "This appointment cannot be rescheduled because it has already been completed or marked as no-show."
+      "This appointment cannot be rescheduled as it is completed or no-show."
     );
   }
 
-  // Check if the new slot is already booked for the same doctor
   const conflictingAppointment = await Appointment.findOne({
-    doctorId: doctorId, // Use the provided doctorId
+    doctorId,
     timeSlot: parsedSlot,
     status: "Scheduled",
     _id: { $ne: id },
@@ -82,24 +80,18 @@ const rescheduleAppointment = async (
     throw new Error("The selected time slot is already booked for this doctor");
   }
 
-  // Fetch patient details from the patients database
   const patient = await PatientServices.findPatientById(patientId);
-  if (!patient) {
-    throw new Error("Patient not found");
-  }
+  if (!patient) throw new Error("Patient not found");
 
-  // Update the appointment with the new time slot and status
-  const updatedAppointment = await Appointment.findByIdAndUpdate(
-    id,
+  // **Use findOneAndUpdate to optimize**
+  const updatedAppointment = await Appointment.findOneAndUpdate(
+    { _id: id },
     { timeSlot: parsedSlot, status: "Rescheduled" },
     { new: true }
   );
 
-  if (!updatedAppointment) {
-    throw new Error("Error updating the appointment");
-  }
+  if (!updatedAppointment) throw new Error("Error updating the appointment");
 
-  // Send reschedule notification to the patient
   await sendNotification(
     patient.email,
     "Rescheduled Appointment Notification",
