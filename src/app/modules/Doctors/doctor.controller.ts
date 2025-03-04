@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { DoctorServices } from "./doctor.service";
-import moment from "moment";
 
 // Create a doctor with availability
 const createDoctorWithAvailability = async (req: Request, res: Response) => {
@@ -19,15 +18,15 @@ const createDoctorWithAvailability = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-
 };
-
 
 // Calculate available slots
 const calculateAvailableSlots = async (req: Request, res: Response) => {
   try {
     const { doctorId } = req.params;
-    const availableSlots = await DoctorServices.calculateAvailableSlots(doctorId);
+    const availableSlots = await DoctorServices.calculateAvailableSlots(
+      doctorId
+    );
     res.status(200).json({
       success: true,
       message: "Available slots calculated",
@@ -43,8 +42,10 @@ const bookSlot = async (req: Request, res: Response) => {
   try {
     const { doctorId } = req.params;
     const { requestedSlot } = req.body;
-    const formattedSlot = moment(requestedSlot).format("YYYY-MM-DD hh:mm A");
-    const result = await DoctorServices.bookSlot(doctorId, formattedSlot);
+    const result = await DoctorServices.bookSlot(
+      doctorId,
+      new Date(requestedSlot)
+    );
     res.status(200).json({
       success: true,
       message: "Slot booked successfully",
@@ -55,9 +56,8 @@ const bookSlot = async (req: Request, res: Response) => {
   }
 };
 
-
 export const DoctorController = {
   createDoctorWithAvailability,
   calculateAvailableSlots,
-  bookSlot
+  bookSlot,
 };

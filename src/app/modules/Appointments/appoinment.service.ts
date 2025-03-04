@@ -1,26 +1,23 @@
-import moment from "moment";
 import { DoctorServices } from "../Doctors/doctor.service";
 import { PatientServices } from "../Patient/patient.service";
 import { sendNotification } from "../Utils/notificationService";
 import { TAppointment } from "./appoinment.interface";
 import { Appointment } from "./appointment.model";
 
-// Create an appointment book the slot and save the appointment
+// Create an appointment (book the slot and save the appointment)
 const createAppointmentIntoDB = async (
   doctorId: string,
   patientId: string,
   patientName: string,
   requestedSlot: Date
 ) => {
-  // In createAppointmentIntoDB
-  const formattedSlot = moment(requestedSlot).format("YYYY-MM-DD hh:mm A");
-  await DoctorServices.bookSlot(doctorId, formattedSlot);
+  await DoctorServices.bookSlot(doctorId, requestedSlot);
 
   const newAppointment = new Appointment({
     doctorId,
     patientId,
     patientName,
-    timeSlot: formattedSlot, 
+    timeSlot: requestedSlot,
     status: "Scheduled",
   });
 
@@ -36,13 +33,13 @@ const getAllAppointmentFromDB = async () => {
 const rescheduleAppointment = async (
   id: string,
   patientId: string,
+  doctorId: string, // Add doctorId
   newSlot: string
 ) => {
   // Validate the new time slot
-  const parsedSlot = moment(newSlot).toDate();
-
-  if (isNaN(parsedSlot.getTime())) {
-    throw new Error("Invalid date format for newSlot");
+  const parsedSlot = new Date(newSlot);
+  if (!newSlot || isNaN(parsedSlot.getTime())) {
+    throw new Error("Invalid or missing date format for newSlot");
   }
 
   // Find the appointment by ID
@@ -51,9 +48,12 @@ const rescheduleAppointment = async (
     throw new Error("Appointment not found");
   }
 
-  // check valid patient id
-  if (appointment.patientId !== patientId) {
+  // Ensure the appointment belongs to the provided patient ID and doctor ID
+  if (appointment.patientId.toString() !== patientId) {
     throw new Error("Patient ID does not match the appointment");
+  }
+  if (appointment.doctorId.toString() !== doctorId) {
+    throw new Error("Doctor ID does not match the appointment");
   }
 
   // Check if the new slot is the same as the existing slot
@@ -70,9 +70,9 @@ const rescheduleAppointment = async (
     );
   }
 
-  // Check if new slot is already booked for the same doctor
+  // Check if the new slot is already booked for the same doctor
   const conflictingAppointment = await Appointment.findOne({
-    doctorId: appointment.doctorId,
+    doctorId: doctorId, // Use the provided doctorId
     timeSlot: parsedSlot,
     status: "Scheduled",
     _id: { $ne: id },
@@ -82,7 +82,7 @@ const rescheduleAppointment = async (
     throw new Error("The selected time slot is already booked for this doctor");
   }
 
-  // check patient
+  // Fetch patient details from the patients database
   const patient = await PatientServices.findPatientById(patientId);
   if (!patient) {
     throw new Error("Patient not found");
@@ -103,13 +103,14 @@ const rescheduleAppointment = async (
   await sendNotification(
     patient.email,
     "Rescheduled Appointment Notification",
-    `Dear ${patient.name}, your appointment has been rescheduled to ${moment(
-      parsedSlot
-    ).format("YYYY-MM-DD hh:mm A")}.`
+    `Dear ${
+      patient.name
+    }, your appointment has been rescheduled to ${parsedSlot.toLocaleString()}.`
   );
 
   return updatedAppointment;
 };
+
 export const AppointmentServices = {
   createAppointmentIntoDB,
   getAllAppointmentFromDB,

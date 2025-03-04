@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { AppointmentServices } from "./appoinment.service";
-import moment from "moment";
 
 // create appointments
 const createAppointment = async (req: Request, res: Response) => {
@@ -11,7 +10,7 @@ const createAppointment = async (req: Request, res: Response) => {
       doctorId,
       patientId,
       patientName,
-      new Date(requestedSlot)
+      new Date(requestedSlot) 
     );
 
     res.status(201).json({
@@ -29,7 +28,7 @@ const getAllAppointment = async (req: Request, res: Response) => {
   try {
     const result = await AppointmentServices.getAllAppointmentFromDB();
     // console.log(result);
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "Appointments retrieved successfully",
       result,
@@ -43,18 +42,16 @@ const getAllAppointment = async (req: Request, res: Response) => {
 const rescheduleAppointment = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newSlot, patientId } = req.body;
+    const { newSlot, patientId, doctorId } = req.body;
     console.log("Received request body:", req.body);
-
-    // Convert newSlot to date using moment and format it
-    const parsedSlot = moment(newSlot, "YYYY-MM-DD hh.mm A").toDate();
 
     const result = await AppointmentServices.rescheduleAppointment(
       id,
       patientId,
-      moment(parsedSlot).format("YYYY-MM-DD hh:mm A")
+      doctorId, 
+      newSlot
     );
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "Appointment rescheduled successfully",
       result,
@@ -63,6 +60,7 @@ const rescheduleAppointment = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const AppointmentController = {
   createAppointment,

@@ -12,12 +12,12 @@ const getAvailableSlots = async (doctorId: string) => {
     status: "Scheduled",
   }).select("timeSlot");
 
-const availableSlots = doctor.schedule.filter(
-  (slot) =>
-    !bookedSlots.some(
-      (appt) => new Date(appt.timeSlot).getTime() === new Date(slot).getTime()
-    )
-);
+  const availableSlots = doctor.schedule.filter(
+    (slot) =>
+      !bookedSlots.some(
+        (appt) => new Date(appt.timeSlot).getTime() === new Date(slot).getTime()
+      )
+  );
 
   return availableSlots;
 };
